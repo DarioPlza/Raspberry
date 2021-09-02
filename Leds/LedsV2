@@ -1,0 +1,176 @@
+/*
+
+*/
+#include <wiringPi.h>
+#include <stdio.h>
+
+
+/*<Variables de tiempo para funci\u00f3n millis>*/
+//Tiempo para controlar las secuencias
+unsigned long time_excA=0;
+unsigned long time_adiA=0;
+unsigned long time_excD=0;
+unsigned long time_adiD=0;
+//Tiempo para controlar los leds
+unsigned long time_1=0;
+unsigned long time_2=0;
+unsigned long time_3=0;
+unsigned long time_4=0;
+//Tiempo total de encendido cada led
+int temp=200;
+//Tiempo total de ejecuci\u00f3n
+unsigned long time_total=0;
+/*</Variables de tiempo para funci\u00f3n millis>*/
+
+
+/*<Asignaci\u00f3n de pines>*/
+const int led3=29; //GPIO 21
+const int led2=28; //GPIO 20
+const int led1=27; //GPIO 16
+const int led0=26; //GPIO 12
+/*</Asignaci\u00f3n de pines>*/
+
+
+/*<Asignaci\u00f3n de tiempo en segundos>*/
+//Tiempo con orden normal
+int tOrdenNormal=30000;
+//Tiempo con orden inverso
+int tOrdenInverso=90000;
+//Tiempo total de ejecuci\u00f3n
+int tTotal=tOrdenNormal+tOrdenInverso;
+//Tiempo por cada secuencia
+int tiempoSecuencia=5000;
+//Total de repeticiones
+int repeticiones=4;
+/*<Asignaci\u00f3n de tiempo en segundos>*/
+
+
+//Funci\u00f3n exclusivo de ascendente
+void exclusivoAsc(int valor){
+	time_excA=millis();
+	while(millis()<time_excA+tiempoSecuencia){
+	int val=(valor%5);
+	time_1=millis();
+	if(val==1) digitalWrite(led0, HIGH);
+	else digitalWrite(led0, LOW); 
+	time_2=millis();
+	if(val==2 && millis()<time_2+temp) digitalWrite(led1, HIGH);
+	else digitalWrite(led1, LOW); 
+	time_3=millis();
+	if(val==3 && millis()<time_3+temp) digitalWrite(led2, HIGH);
+	else digitalWrite(led2, LOW); 
+	time_4=millis();
+	if(val==4 && millis()<time_4+temp) digitalWrite(led3, HIGH);
+	else digitalWrite(led3, LOW); 	
+	valor++;
+	while(millis()<time_1+temp){}
+	}
+}
+//Funci\u00f3n aditivo de forma ascendente
+void aditivoAsc(int valor){
+	time_adiA=millis();
+	while(millis()<time_adiA+tiempoSecuencia){
+	int val=(valor%5);
+	time_1=millis();
+	if(val>0) digitalWrite(led0, HIGH);
+	else digitalWrite(led0, LOW); 
+	time_2=millis();
+	if(val>1 && millis()<time_2+temp) digitalWrite(led1, HIGH);
+	else digitalWrite(led1, LOW);
+	time_3=millis();
+	if(val>2 && millis()<time_3+temp) digitalWrite(led2, HIGH);
+	else digitalWrite(led2, LOW);
+	time_4=millis();
+	if(val>3 && millis()<time_4+temp) digitalWrite(led3, HIGH);
+	else digitalWrite(led3, LOW);	
+	valor++;
+	while(millis()<time_1+temp){}
+	}
+}
+//Funci\u00f3n exclusiva de forma desendente
+void exlusivoDes(int valor){
+	time_excD=millis();	
+	while(millis()<time_excD+tiempoSecuencia){
+	int val=(valor%5);
+	time_1=millis();
+	if(val==4) digitalWrite(led0, HIGH);
+	else digitalWrite(led0, LOW); 
+	time_2=millis();
+	if(val==3 && millis()<time_2+temp) digitalWrite(led1, HIGH);
+	else digitalWrite(led1, LOW); 
+	time_3=millis();
+	if(val==2 && millis()<time_3+temp) digitalWrite(led2, HIGH);
+	else digitalWrite(led2, LOW); 
+	time_4=millis();
+	if(val==1 && millis()<time_4+temp) digitalWrite(led3, HIGH);
+	else digitalWrite(led3, LOW); 
+	valor++;
+	while(millis()<time_1+temp){}
+	}
+}
+//Funci\u00f3n aditivo de forma desendente
+void aditivoDes(int valor){
+	time_adiD=millis();		
+	while(millis()<time_adiD+tiempoSecuencia){
+	int val=(valor%5);
+	time_1=millis();
+	if(val<4) digitalWrite(led0, HIGH);
+	else digitalWrite(led0, LOW); 
+	time_2=millis();
+	if(val<3 && millis()<time_2+temp) digitalWrite(led1, HIGH);
+	else digitalWrite(led1, LOW); 
+	time_3=millis();
+	if(val<2 && millis()<time_3+temp) digitalWrite(led2, HIGH);
+	else digitalWrite(led2, LOW); 
+	time_4=millis();
+	if(val<1 && millis()<time_4+temp) digitalWrite(led3, HIGH);
+	else digitalWrite(led3, LOW); 
+	valor++;
+	while(millis()<time_1+temp){}
+	}
+}
+void apagar(){
+	digitalWrite(led0, LOW); 
+	digitalWrite(led1, LOW); 
+	digitalWrite(led2, LOW); 
+	digitalWrite(led3, LOW); 
+}
+
+
+int main(void){
+	wiringPiSetup();
+	pinMode(led0, OUTPUT);
+	pinMode(led1, OUTPUT);
+	pinMode(led2, OUTPUT);
+	pinMode(led3, OUTPUT);
+	
+	int valor=0;
+	int aux=0;
+	int rep=0;
+	
+	while(rep<repeticiones){
+		time_total=millis();
+		while(millis()<time_total+tTotal){
+			if(millis()<time_total+tOrdenNormal){
+				if(aux%4==0)exclusivoAsc(valor);
+				if(aux%4==1)aditivoAsc(valor);
+				if(aux%4==2)exlusivoDes(valor);
+				if(aux%4==3)aditivoDes(valor);
+			}
+			else{
+				if(aux%4==3)exclusivoAsc(valor);
+				if(aux%4==2)aditivoAsc(valor);
+				if(aux%4==1)exlusivoDes(valor);
+				if(aux%4==0)aditivoDes(valor);
+			}
+			aux++;
+		}
+		rep++;
+		time_total=0;
+		printf("Vuelta %d\n",rep);
+	}
+	apagar();
+	return 0;
+}
+
+	
